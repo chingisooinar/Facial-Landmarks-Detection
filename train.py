@@ -26,17 +26,24 @@ ap = argparse.ArgumentParser()
 ap.add_argument("-e", "--epoch",default=80, type=int, help="number of epochs")
 ap.add_argument("-b", "--batch-size", default=32, type=int, help="batch size")
 ap.add_argument("-d", "--dataset", default="Kaggle", type=str, help="Kaggle or Udacity")
-ap.add_argument("-m", "--model", default="Custom", type=str, help="Kaggle or Udacity")
-ap.add_argument("-l", "--loss", default="MSE", type=str, help="Kaggle or Udacity")
+ap.add_argument("-m", "--model", default="Custom", type=str, help="Model Name")
+ap.add_argument("-l", "--loss", default="MSE", type=str, help="Loss function")
+ap.add_argument("-s", "--split", default=True, type=bool, help="Split method")
+ap.add_argument("-x", "--train30", default=False, type=bool, help="Subset for 30 annotations")
+ap.add_argument("-y", "--train8", default=True, type=bool, help="Subset for 8 annotations")
 args = vars(ap.parse_args())
+if args['train8']:
+    n = 8
+elif args['train30']:
+    n = 30
 if args['model'] == "NaimishNet":
-    net = NaimishNet(8)
+    net = NaimishNet(n)
 elif args['model'] == "VggFace":
-    net = VggFace(8)    
+    net = VggFace(n)    
 elif args['model'] == "Custom":
-    net = Net2(8)
+    net = Net2(n)
 else:
-    net = LeNet5(8)
+    net = LeNet5(n)
 model_name = args['model']
 print(net)
 
@@ -52,7 +59,7 @@ assert(train_transform is not None and test_transform is not None), 'Define a da
 # create the transformed dataset
 
 if args["dataset"] == "Kaggle":
-    X, y = load_KagggleDataset(split=True,train_30=True)
+    X, y = load_KagggleDataset(split=args['split'],train_30=args['train30'],train_8=args['train8'])
     X_test, y_test = X[:300], y[:300]
     X_train, y_train = X[300:], y[300:]
     transformed_dataset = KagggleDataset(X_train, y_train, train_transform)
@@ -73,13 +80,13 @@ for i in range(4):
     sample = transformed_dataset[i]
     print(i, sample['image'].shape, sample['keypoints'].size())
 # load training data in batches
-batch_size = 32
+batch_size = args["batch_size"]
 train_loader = DataLoader(transformed_dataset, 
                           batch_size=batch_size,
                           shuffle=True, 
                           num_workers=0)
 # load test data in batches
-batch_size =32
+batch_size =args["batch_size"]
 
 test_loader = DataLoader(test_dataset, 
                           batch_size=batch_size,
@@ -95,7 +102,7 @@ net.to(device)
 
 optimizer =torch.optim.Adam(net.parameters(), lr=1e-5, weight_decay=5e-4) #define optimizer
 val_net(0, 0, net, criterion, optimizer, device, test_loader, sub, div)
-n_epochs = 600
+n_epochs = args["epoch"]
 min_loss = float('inf')
 for epoch in range(n_epochs):
     print("=====Training=======")
