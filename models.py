@@ -193,16 +193,16 @@ class NaimishNet(nn.Module):
     def forward(self, x):
         #print(x.shape)
         x = self.max_pool(F.elu(self.conv1(x)))
-       # x = self.drop1(x)
+        x = self.drop1(x)
 
         x = self.max_pool(F.elu(self.conv2(x)))
-      #  x = self.drop2(x)
+        x = self.drop2(x)
 
         x = self.max_pool(F.elu(self.conv3(x)))
-     #   x = self.drop3(x)
+        x = self.drop3(x)
 
         x = self.max_pool(F.elu(self.conv4(x)))
-     #   x = self.drop4(x)
+        x = self.drop4(x)
 
         # Flatten layer
         x = x.view(x.size(0), -1)
